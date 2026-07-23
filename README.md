@@ -104,6 +104,9 @@ Apply procedural deformations to the leaf mesh using the built-in Geometry Nodes
 ### Create & Apply Bend
 Adds a natural curvature to the leaf along its main axis.
 
+<img width="1897" height="998" alt="leaf_gen_8" src="https://github.com/user-attachments/assets/cac4f305-a8ae-448d-a148-03a1181a606a" />
+
+
 ### Create & Apply Subdivide
 Applies a Geometry Nodes subdivision pass for smooth silhouettes without baking.
 
