@@ -79,6 +79,8 @@ Invert the vein direction or remove the entire vein setup in one click.
 
 Applies a physically accurate two-sided translucency shader that makes leaves react correctly to backlit conditions.
 
+<img width="1897" height="998" alt="leaf_gen_11 (1)" src="https://github.com/user-attachments/assets/68b00ee2-d45e-4fc2-9ff7-14083a3e68e7" />
+
 ### Blender 5.2+ (native Thin Wall)
 Uses the native **Thin Wall** property on the Principled BSDF, introduced in Blender 5.2. Creates two Principled BSDF nodes mixed via Geometry **Backfacing**:
 
