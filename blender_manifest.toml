@@ -6,6 +6,7 @@ tagline = "An add-on to create leaf retopology and procedural leaf shading in Bl
 maintainer = "Guillaume Bissieres"
 type = "add-on"
 website = "https://bissieres.gumroad.com/l/LeafGen"
+tracker_url = "https://github.com/GuillaumeBissieres/blender-leaf-gen/issues"
 tags = ["Mesh"]
 blender_version_min = "3.0.0"
 license = [
