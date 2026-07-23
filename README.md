@@ -46,8 +46,12 @@ Without these libraries the add-on falls back to a built-in minimal contour meth
 ### 1. Import Leaf PNG
 Select a leaf image (PNG with transparency). The add-on reads the alpha channel to extract the leaf silhouette.
 
+<img width="1897" height="998" alt="leaf_gen_5" src="https://github.com/user-attachments/assets/aa3bfcef-c011-44b1-93ce-038dd72a83e6" />
+
 ### 2. Grid Projection
 Projects a quad grid onto the leaf surface, snapping to the mesh and trimming to the silhouette boundary. Adjust **Grid Density** to control topology resolution.
+
+<img width="1897" height="998" alt="leaf_gen_6" src="https://github.com/user-attachments/assets/93d15de2-f53a-4a6b-91ed-3cd3fe593a71" />
 
 ### 3. Curve Modifier (Optional)
 Convert the retopo result to a curve, simplify its control points, and loft it back to quads using the **Loft Curve → Quads** operator.
@@ -60,6 +64,8 @@ Add procedural vein geometry to your leaf using the bump shader workflow.
 
 ### Add Veins (Solidify)
 Creates a solidified vein structure driven by the leaf texture's luminance channel.
+
+<img width="1897" height="998" alt="leaf_gen_7" src="https://github.com/user-attachments/assets/c34a13cf-daaa-4e3f-8413-9289b9196b35" />
 
 ### + Bump Shader
 Connects the vein normal map into the material's Bump input, giving the appearance of raised veins without extra geometry.
