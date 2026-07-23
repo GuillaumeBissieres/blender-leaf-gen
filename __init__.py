@@ -18,7 +18,7 @@ bl_info = {
     "blender": (5, 0, 1),
     "location": "View3D > Sidebar > Leaf Gen",
     "description": "An add-on to create leaf retopology and procedural leaf shading in Blender",
-    "category": "3D View",
+    "category": "Mesh",
     "doc_url": "https://bissieres.gumroad.com/l/LeafGen",
 }
 
