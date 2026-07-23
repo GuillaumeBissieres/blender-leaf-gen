@@ -21,6 +21,9 @@ The contour detection system (used for precise leaf silhouette extraction) works
 - `opencv-python`
 - `Pillow`
 
+<img width="1897" height="1000" alt="leaf_gen_1" src="https://github.com/user-attachments/assets/ecc5c506-550d-466d-823d-1a922f81bb16" />
+
+
 **These can be installed directly from the add-on preferences** — no terminal or manual pip commands needed. Go to **Edit** > **Preferences** > **Add-ons** > **Leaf Retopo** and click **Install numpy + opencv-python + Pillow**.
 
 Without these libraries the add-on falls back to a built-in minimal contour method — the workflow remains fully functional, only silhouette precision is reduced.
