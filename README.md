@@ -49,7 +49,7 @@ Select a leaf image (PNG with transparency). The add-on reads the alpha channel 
 ### 2. Grid Projection
 Projects a quad grid onto the leaf surface, snapping to the mesh and trimming to the silhouette boundary. Adjust **Grid Density** to control topology resolution.
 
-### 3. Curve Modifier
+### 3. Curve Modifier (Optional)
 Convert the retopo result to a curve, simplify its control points, and loft it back to quads using the **Loft Curve → Quads** operator.
 
 ---
