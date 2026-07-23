@@ -1,0 +1,13 @@
+schema_version = "1.0.0"
+id = "leaf_retopo"
+version = "1.0.3"
+name = "Leaf Retopo"
+tagline = "An Addon to create leaf retopology in Blender"
+maintainer = "Guillaume Bissieres"
+type = "add-on"
+website = "https://bissieres.gumroad.com/l/LeafGen"
+tags = ["3D View"]
+blender_version_min = "3.0.0"
+license = [
+"SPDX:GPL-2.0-or-later",
+]
