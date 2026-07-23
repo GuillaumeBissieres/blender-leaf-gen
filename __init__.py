@@ -12,11 +12,11 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bl_info = {
-    "name": "Leaf Retopo - Grid Projection + GN (inline create & apply)",
+    "name": "Leaf Gen - Grid Projection + GN (inline create & apply)",
     "author": "Guillaume Bissieres",
     "version": (1, 0, 3),
     "blender": (5, 0, 1),
-    "location": "View3D > Sidebar > Leaf Retopo",
+    "location": "View3D > Sidebar > Leaf Gen",
     "description": "An add-on to create leaf retopology and procedural leaf shading in Blender",
     "category": "3D View",
     "doc_url": "https://bissieres.gumroad.com/l/LeafGen",
@@ -3155,12 +3155,12 @@ class OBJECT_OT_leaf_thin_wall_remove(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class VIEW3D_PT_leaf_retopo_panel(bpy.types.Panel):
-    bl_label = "Leaf Retopo"
-    bl_idname = "VIEW3D_PT_leaf_retopo"
+class VIEW3D_PT_leaf_gen_panel(bpy.types.Panel):
+    bl_label = "Leaf Gen"
+    bl_idname = "VIEW3D_PT_leaf_gen"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'Leaf Retopo'
+    bl_category = 'Leaf Gen'
 
     def draw(self, context):
         layout = self.layout
@@ -3302,8 +3302,8 @@ class VIEW3D_PT_leaf_retopo_panel(bpy.types.Panel):
 # Dependency operators + AddonPreferences
 # -----------------------------------------------------------------------
 
-class LEAFRETOPO_OT_InstallDependencies(bpy.types.Operator):
-    bl_idname   = "leafretopo.install_dependencies"
+class LEAFGEN_OT_InstallDependencies(bpy.types.Operator):
+    bl_idname   = "leafgen.install_dependencies"
     bl_label    = "Install Dependencies"
     bl_description = (
         "Download and install numpy, opencv-python and Pillow into Blender's Python. "
@@ -3315,20 +3315,20 @@ class LEAFRETOPO_OT_InstallDependencies(bpy.types.Operator):
         import sys
         self.report({'INFO'},
             "Installing… check the system console (Window > Toggle System Console) for progress.")
-        print(f"[Leaf Retopo] Python: {sys.executable}")
-        print(f"[Leaf Retopo] Version: {sys.version}")
-        print(f"[Leaf Retopo] Install target: {_pip_target_dir()}")
+        print(f"[Leaf Gen] Python: {sys.executable}")
+        print(f"[Leaf Gen] Version: {sys.version}")
+        print(f"[Leaf Gen] Install target: {_pip_target_dir()}")
 
         failed = []
         for imp, pip in _LEAF_DEPS:
             try:
                 importlib.import_module(imp)
-                print(f"[Leaf Retopo] ✓ {pip} already installed — skipped")
+                print(f"[Leaf Gen] ✓ {pip} already installed — skipped")
                 continue
             except ImportError:
                 pass
-            print(f"[Leaf Retopo] Installing {pip}…")
-            ok = _install_dep(pip, lambda m: print(f"[Leaf Retopo] {m}"))
+            print(f"[Leaf Gen] Installing {pip}…")
+            ok = _install_dep(pip, lambda m: print(f"[Leaf Gen] {m}"))
             if not ok:
                 failed.append(pip)
 
@@ -3349,8 +3349,8 @@ class LEAFRETOPO_OT_InstallDependencies(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class LEAFRETOPO_OT_CheckDependencies(bpy.types.Operator):
-    bl_idname   = "leafretopo.check_dependencies"
+class LEAFGEN_OT_CheckDependencies(bpy.types.Operator):
+    bl_idname   = "leafgen.check_dependencies"
     bl_label    = "Refresh Status"
     bl_description = "Check which libraries are currently available"
     bl_options = {'REGISTER', 'INTERNAL'}
@@ -3363,7 +3363,7 @@ class LEAFRETOPO_OT_CheckDependencies(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class LEAF_RETOPO_Preferences(bpy.types.AddonPreferences):
+class LEAF_GEN_Preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
 
     def draw(self, context):
@@ -3372,7 +3372,7 @@ class LEAF_RETOPO_Preferences(bpy.types.AddonPreferences):
         all_ok = all(ok for _, ok in status)
 
         box = layout.box()
-        box.label(text="Leaf Retopo — Optional Libraries (contour detection)", icon='SCRIPT')
+        box.label(text="Leaf Gen — Optional Libraries (contour detection)", icon='SCRIPT')
 
         grid = box.column(align=True)
         for pip_name, ok in status:
@@ -3389,20 +3389,20 @@ class LEAF_RETOPO_Preferences(bpy.types.AddonPreferences):
             layout.separator()
             col = layout.column()
             col.scale_y = 1.5
-            col.operator("leafretopo.install_dependencies",
+            col.operator("leafgen.install_dependencies",
                          text="Install numpy + opencv-python + Pillow", icon='IMPORT')
         else:
             layout.label(text="All libraries installed — precise contour detection active.", icon='CHECKMARK')
 
         layout.separator()
         row = layout.row()
-        row.operator("leafretopo.check_dependencies", text="Refresh Status", icon='FILE_REFRESH')
+        row.operator("leafgen.check_dependencies", text="Refresh Status", icon='FILE_REFRESH')
 
 
 classes = (
-    LEAFRETOPO_OT_InstallDependencies,
-    LEAFRETOPO_OT_CheckDependencies,
-    LEAF_RETOPO_Preferences,
+    LEAFGEN_OT_InstallDependencies,
+    LEAFGEN_OT_CheckDependencies,
+    LEAF_GEN_Preferences,
     ImportLeafClean,
     MESH_OT_delta_quad_plus,
     MESH_OT_grid_cut,
@@ -3420,7 +3420,7 @@ classes = (
     OBJECT_OT_leaf_thin_wall,
     OBJECT_OT_leaf_thin_wall_remove,
     VIEW3D_OT_toggle_wireframe,
-    VIEW3D_PT_leaf_retopo_panel,
+    VIEW3D_PT_leaf_gen_panel,
 )
 
 
