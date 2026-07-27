@@ -14,11 +14,11 @@
 bl_info = {
     "name": "Leaf Gen - Grid Projection + GN (inline create & apply)",
     "author": "Guillaume Bissieres",
-    "version": (1, 0, 3),
+    "version": (1, 0, 5),
     "blender": (5, 0, 1),
     "location": "View3D > Sidebar > Leaf Gen",
     "description": "An add-on to create leaf retopology and procedural leaf shading in Blender",
-    "category": "Mesh",
+    "category": "3D View",
     "doc_url": "https://bissieres.gumroad.com/l/LeafGen",
 }
 
@@ -32,18 +32,9 @@ from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty, 
 from bpy_extras.io_utils import ImportHelper
 
 # -----------------------------------------------------------------------
-# Dependency management
-# Packages: numpy, opencv-python, Pillow
+# Optional dependencies — bundled as wheels in ./wheels/
+# Blender installs them automatically when the extension is enabled.
 # -----------------------------------------------------------------------
-import subprocess
-import importlib
-
-# (import_name, pip_name)
-_LEAF_DEPS = [
-    ("numpy",  "numpy"),
-    ("cv2",    "opencv-python"),
-    ("PIL",    "Pillow"),
-]
 
 cv2         = None
 np          = None
@@ -52,35 +43,18 @@ PIL_ImageFilter = None
 
 
 def _try_import_deps():
-    """Try to import optional deps; updates module-level globals.
-    Also ensures the local deps/ folder and user site-packages are on sys.path."""
+    """Import optional deps (bundled as wheels + numpy native). Updates globals."""
     global cv2, np, PIL_Image, PIL_ImageFilter
-    import sys, os
-
-    # Add local deps/ folder (--target install fallback)
-    local_deps = os.path.join(os.path.dirname(__file__), "deps")
-    if os.path.isdir(local_deps) and local_deps not in sys.path:
-        sys.path.insert(0, local_deps)
-
-    # Add user site-packages (--user install)
     try:
-        import site
-        user_site = site.getusersitepackages()
-        if user_site and os.path.isdir(user_site) and user_site not in sys.path:
-            sys.path.insert(0, user_site)
-    except Exception:
-        pass
-
-    try:
-        import importlib
         import cv2 as _cv2
-        import numpy as _np
         cv2 = _cv2
-        np  = _np
     except ImportError:
         cv2 = None
-        np  = None
-
+    try:
+        import numpy as _np
+        np = _np
+    except ImportError:
+        np = None
     try:
         from PIL import Image as _PilImage, ImageFilter as _PilImageFilter
         PIL_Image       = _PilImage
@@ -91,75 +65,16 @@ def _try_import_deps():
 
 
 def _dep_status():
-    """Return list of (pip_name, is_installed) for all leaf deps."""
-    results = []
-    for imp, pip in _LEAF_DEPS:
-        try:
-            importlib.import_module(imp)
-            results.append((pip, True))
-        except ImportError:
-            results.append((pip, False))
-    return results
+    """Return list of (label, is_installed) for display in preferences."""
+    return [
+        ("numpy (built-in)",   np is not None),
+        ("opencv-python",      cv2 is not None),
+        ("Pillow",             PIL_Image is not None),
+    ]
 
 
 def _all_deps_ok():
     return all(ok for _, ok in _dep_status())
-
-
-def _pip_target_dir():
-    """Return the user-writable site-packages dir where Blender extensions can install."""
-    import site, sys, os
-    # Prefer user site dir (writable without admin rights)
-    user_site = site.getusersitepackages()
-    if user_site and os.path.exists(os.path.dirname(user_site)):
-        os.makedirs(user_site, exist_ok=True)
-        return user_site
-    # Fallback: alongside the __init__.py of this addon
-    return os.path.join(os.path.dirname(__file__), "deps")
-
-
-def _install_dep(pip_name, report_fn=None):
-    import sys, os
-    python = sys.executable
-    target = _pip_target_dir()
-
-    # Make sure target is on sys.path so the import works right after install
-    if target not in sys.path:
-        sys.path.insert(0, target)
-
-    # Try several strategies in order
-    strategies = [
-        # 1. Plain upgrade (works if pip is not locked)
-        [python, "-m", "pip", "install", "--upgrade", pip_name],
-        # 2. --user (most common workaround for Blender-managed Python)
-        [python, "-m", "pip", "install", "--upgrade", "--user", pip_name],
-        # 3. --target into addon/deps (last resort, always writable)
-        [python, "-m", "pip", "install", "--upgrade",
-         "--target", target, pip_name],
-    ]
-
-    for cmd in strategies:
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-            if result.returncode == 0:
-                if report_fn:
-                    report_fn(f"✓ {pip_name} installed")
-                return True
-            # If "externally-managed" error, try next strategy
-            if "externally-managed" in result.stderr or "externally managed" in result.stderr:
-                if report_fn:
-                    report_fn(f"  → pip blocked, retrying with next strategy…")
-                continue
-        except Exception as e:
-            if report_fn:
-                report_fn(f"  → error: {e}")
-            continue
-
-    # All strategies failed — report the last error
-    if report_fn:
-        report_fn(f"✗ {pip_name}: all install strategies failed. "
-                  f"Last stderr: {result.stderr[-300:]}")
-    return False
 
 
 # Run on first import
@@ -3299,67 +3214,23 @@ class VIEW3D_PT_leaf_gen_panel(bpy.types.Panel):
 # ------------------ Registration ------------------
 
 # -----------------------------------------------------------------------
-# Dependency operators + AddonPreferences
+# -----------------------------------------------------------------------
+# AddonPreferences — statut des librairies (wheels bundlées)
 # -----------------------------------------------------------------------
 
-class LEAFGEN_OT_InstallDependencies(bpy.types.Operator):
-    bl_idname   = "leafgen.install_dependencies"
-    bl_label    = "Install Dependencies"
-    bl_description = (
-        "Download and install numpy, opencv-python and Pillow into Blender's Python. "
-        "Requires an internet connection. Blender may appear frozen during installation."
-    )
-    bl_options = {'REGISTER', 'INTERNAL'}
-
-    def execute(self, context):
-        import sys
-        self.report({'INFO'},
-            "Installing… check the system console (Window > Toggle System Console) for progress.")
-        print(f"[Leaf Gen] Python: {sys.executable}")
-        print(f"[Leaf Gen] Version: {sys.version}")
-        print(f"[Leaf Gen] Install target: {_pip_target_dir()}")
-
-        failed = []
-        for imp, pip in _LEAF_DEPS:
-            try:
-                importlib.import_module(imp)
-                print(f"[Leaf Gen] ✓ {pip} already installed — skipped")
-                continue
-            except ImportError:
-                pass
-            print(f"[Leaf Gen] Installing {pip}…")
-            ok = _install_dep(pip, lambda m: print(f"[Leaf Gen] {m}"))
-            if not ok:
-                failed.append(pip)
-
-        # Reload globals so the session benefits immediately
-        _try_import_deps()
-
-        if failed:
-            self.report({'ERROR'},
-                f"Failed: {', '.join(failed)}. "
-                "Open Window > Toggle System Console for details.")
-        else:
-            libs = "cv2" if cv2 else "—"
-            self.report({'INFO'},
-                "Dependencies installed! "
-                f"cv2={'✓' if cv2 else '✗'}  numpy={'✓' if np else '✗'}  "
-                f"Pillow={'✓' if PIL_Image else '✗'}. "
-                "Restart Blender if detection still uses the fallback.")
-        return {'FINISHED'}
-
-
 class LEAFGEN_OT_CheckDependencies(bpy.types.Operator):
+    """Re-check which libraries are currently available."""
     bl_idname   = "leafgen.check_dependencies"
     bl_label    = "Refresh Status"
-    bl_description = "Check which libraries are currently available"
+    bl_description = "Re-scan which libraries are available after extension activation"
     bl_options = {'REGISTER', 'INTERNAL'}
 
     def execute(self, context):
         _try_import_deps()
         status = _dep_status()
-        msg = " | ".join(f"{'✓' if ok else '✗'} {p}" for p, ok in status)
-        self.report({'INFO' if _all_deps_ok() else 'WARNING'}, msg)
+        msg = " | ".join(f"{'✓' if ok else '✗'} {name}" for name, ok in status)
+        level = 'INFO' if _all_deps_ok() else 'WARNING'
+        self.report({level}, msg)
         return {'FINISHED'}
 
 
@@ -3368,39 +3239,39 @@ class LEAF_GEN_Preferences(bpy.types.AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
+        _try_import_deps()
         status = _dep_status()
-        all_ok = all(ok for _, ok in status)
+        all_ok = _all_deps_ok()
 
         box = layout.box()
         box.label(text="Leaf Gen — Optional Libraries (contour detection)", icon='SCRIPT')
 
-        grid = box.column(align=True)
-        for pip_name, ok in status:
-            row = grid.row()
-            row.label(text=pip_name, icon='CHECKMARK' if ok else 'X')
+        col = box.column(align=True)
+        for name, ok in status:
+            row = col.row()
+            row.label(text=name, icon='CHECKMARK' if ok else 'X')
             row.label(text="Installed" if ok else "Not found")
 
         layout.separator()
 
-        if not all_ok:
-            warn = layout.box()
-            warn.label(text="Missing libraries → minimal fallback (less precise contours).", icon='ERROR')
-            warn.label(text="Click below to install automatically (requires internet).")
-            layout.separator()
-            col = layout.column()
-            col.scale_y = 1.5
-            col.operator("leafgen.install_dependencies",
-                         text="Install numpy + opencv-python + Pillow", icon='IMPORT')
+        if all_ok:
+            layout.label(
+                text="All libraries installed — precise contour detection active.",
+                icon='CHECKMARK')
         else:
-            layout.label(text="All libraries installed — precise contour detection active.", icon='CHECKMARK')
+            warn = layout.box()
+            warn.label(
+                text="Some libraries missing — using minimal fallback (less precise).",
+                icon='ERROR')
+            warn.label(
+                text="Disable and re-enable the extension to trigger wheel extraction.")
 
         layout.separator()
-        row = layout.row()
-        row.operator("leafgen.check_dependencies", text="Refresh Status", icon='FILE_REFRESH')
+        layout.operator("leafgen.check_dependencies",
+                        text="Refresh Status", icon='FILE_REFRESH')
 
 
 classes = (
-    LEAFGEN_OT_InstallDependencies,
     LEAFGEN_OT_CheckDependencies,
     LEAF_GEN_Preferences,
     ImportLeafClean,
@@ -3427,8 +3298,6 @@ classes = (
 def register():
     for c in classes:
         bpy.utils.register_class(c)
-    # Run dep check once at startup so globals are fresh
-    _try_import_deps()
 
     # Grid Cut scene properties (defaults)
     bpy.types.Scene.gridcut_density = IntProperty(
